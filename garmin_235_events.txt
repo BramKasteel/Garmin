@@ -1,0 +1,8 @@
+Events Garmin Forerunner 235
+
+event event_type description
+0 0 'Start'
+13 0 'HR above max-value'
+13 1 'HR below max-value'
+38 3 'Press stop button'?
+0 4 'Stop'

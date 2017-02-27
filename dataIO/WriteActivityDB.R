@@ -8,7 +8,7 @@ if (initialization){
   path <- "FIT/"
   
   fileDetails = file.info(list.files(path,full.names=T))
-  idx <- fileDetails$ctime > Sys.time()-31*24*60*60
+  idx <- fileDetails$ctime > Sys.time()-(31+4)*24*60*60
   filenamesPath <- rownames(fileDetails)[idx]
   filenamesOrig <- substr(filenamesPath,start=5,stop=10000000L)
   fitFiles <- lapply(filenamesPath, read.fit)
@@ -19,7 +19,7 @@ if (initialization){
   source('dataIO/CreateSQLConnection.R')
   db <- CreateSQLConnection()
   
-  for (i in 1:length(fitFiles)){
+  for (i in 99:length(fitFiles)){
     print(i)
     WriteActivityDB(db, fitFiles[[i]])
   }
@@ -44,7 +44,7 @@ WriteActivityDB <- function(db, fitFile, user="Bram", actTable='garmin.activity'
     query <- paste0(query," VALUES (",
                     "'",fitFile$fileName,"', ",
                     "'",user,"', ",
-                    "'",as.POSIXct(fitFile$file_id$time_created,origin='1989-12-31 23:59:59',tz='UTC'),"', ",
+                    "'",as.POSIXct(fitFile$file_id$time_created,origin='1990-12-31 00:00:01',tz='UTC'),"', ",
                     paste(as.numeric(colDB_TF %in% colNm),collapse=","),",NULL)")
     
     dbGetQuery(db,query)
@@ -54,7 +54,7 @@ WriteActivityDB <- function(db, fitFile, user="Bram", actTable='garmin.activity'
     recordMelt <- melt(fitFile$record, id.vars = 'timestamp')
     recordMelt <- data.frame(id=fitFile$fileName,recordMelt)
     recordMelt <- recordMelt[complete.cases(recordMelt),]
-    #Inefficient, but works. Row-by-row:
+
     fileName <- fitFile$fileName
     
     values <- apply(recordMelt,MARGIN=1,FUN = function(x) {
@@ -62,7 +62,6 @@ WriteActivityDB <- function(db, fitFile, user="Bram", actTable='garmin.activity'
     })
     values <- paste(values,collapse=',')
     
-    #dbGetQuery(db,paste0("INSERT INTO ",recTable," VALUES ('",fileName,"', '",recordMelt[i,2],"', ",recordMelt[i,3],")"))
     dbGetQuery(db,paste0("INSERT INTO ",recTable," VALUES ", values))
   }
   
